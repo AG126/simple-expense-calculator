@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expense Calculator / खर्च कॅल्क्युलेटर</title>
+  <link rel="stylesheet" href="main.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <header class="navbar-fixed">
+    <nav class="app-navbar">
+      <div class="nav-brand">
+        <img src="calculator-solid-full.svg" width="32" height="32" alt="Calculator">
+        <span class="nav-title" data-en="Expense Calculator" data-mr="खर्च कॅल्क्युलेटर">Expense Calculator</span>
+      </div>
+      <div class="nav-actions">
+        <button class="btn-icon" onclick="toggleTheme()"><span id="themeIcon">🌙</span></button>
+        <button class="btn-lang" onclick="toggleLanguage()"><span id="langLabel">मराठी</span></button>
+      </div>
+    </nav>
+  </header>
+
+  <main class="main-container" id="mainContainer">
+
+    <div class="info-card">
+      <p data-en="Add your expenses below. The total is calculated automatically. Export as PDF or Image — you can re-import exported PDFs to edit them again."
+         data-mr="खाली आपले खर्च जोडा. एकूण आपोआप मोजले जाते. PDF किंवा प्रतिमा म्हणून निर्यात करा — संपादनासाठी निर्यात केलेले PDF पुन्हा आयात करता येतात.">
+        Add your expenses below. The total is calculated automatically. Export as PDF or Image — you can re-import exported PDFs to edit them again.
+      </p>
+    </div>
+
+    <!-- ACTION BUTTONS -->
+    <div class="action-bar">
+      <button class="btn btn-outline-sm" onclick="triggerImport()">
+        📂 <span data-en="Import PDF/JSON" data-mr="आयात करा">Import PDF/JSON</span>
+      </button>
+      <button class="btn btn-outline-sm" onclick="exportJSON()">
+        💾 <span data-en="Save JSON" data-mr="JSON जतन">Save JSON</span>
+      </button>
+      <button class="btn btn-outline-sm" onclick="showModal()">
+        📊 <span data-en="Summary" data-mr="सारांश">Summary</span>
+      </button>
+      <button class="btn btn-outline-sm" onclick="exportPDF()">
+        📄 <span data-en="PDF" data-mr="PDF">PDF</span>
+      </button>
+      <button class="btn btn-outline-sm" onclick="exportImage()">
+        🖼️ <span data-en="Image" data-mr="प्रतिमा">Image</span>
+      </button>
+    </div>
+
+    <!-- hidden file inputs -->
+    <input type="file" id="importFileInput" accept=".json,.pdf" style="display:none" onchange="handleImport(event)">
+
+    <!-- EXPENSE ROWS CARD -->
+    <div class="card expense-card">
+      <div class="card-header">
+        <h2 class="card-title" data-en="Expense Items" data-mr="खर्चाचे तपशील">Expense Items</h2>
+        <div class="row-controls">
+          <button class="btn-icon-round" onclick="addInputRow()" title="Add row">
+            <img src="circle-plus-solid-full.svg" alt="Add" width="26">
+          </button>
+          <button class="btn-icon-round" onclick="resetIp()" title="Reset">
+            <img src="circular.png" alt="Reset" width="26">
+          </button>
+          <button class="btn-icon-round" onclick="removeInputRow()" title="Remove last">
+            <img src="circle-minus-solid-full.svg" alt="Remove" width="26">
+          </button>
+        </div>
+      </div>
+      <div class="expense-col-headers">
+        <span data-en="Title" data-mr="शीर्षक">Title</span>
+        <span data-en="Amount (₹)" data-mr="रक्कम (₹)">Amount (₹)</span>
+      </div>
+      <div id="inputRows">
+        <div class="input-row">
+          <input type="text" class="form-input title-input" placeholder="Title" data-ph-en="Title" data-ph-mr="शीर्षक">
+          <div class="amount-wrap">
+            <input type="text" class="form-input amount-input" placeholder="0" inputmode="decimal" data-ph-en="0" data-ph-mr="०" readonly>
+            <span class="currency-badge">₹</span>
+          </div>
+        </div>
+      </div>
+      <div class="expense-total-bar">
+        <span data-en="Total Expenses:" data-mr="एकूण खर्च:">Total Expenses:</span>
+        <strong id="expenseShow" class="expense-total-value">—</strong>
+      </div>
+    </div>
+
+    <!-- CALCULATE CARD -->
+    <div class="card summary-card">
+      <h2 class="card-title" data-en="Calculate Balance" data-mr="शिल्लक मोजा">Calculate Balance</h2>
+      <div class="summary-grid">
+        <div class="summary-field">
+          <label for="amount" data-en="Your Amount" data-mr="आपली रक्कम">Your Amount</label>
+          <div class="input-with-badge">
+            <input type="text" class="form-input text-center" id="amount" placeholder="0" inputmode="decimal" readonly>
+            <span class="currency-badge">₹</span>
+          </div>
+        </div>
+        <div class="summary-field">
+          <label for="expense" data-en="Total Expense" data-mr="एकूण खर्च">Total Expense</label>
+          <div class="input-with-badge">
+            <input type="text" class="form-input text-center" id="expense" placeholder="0" inputmode="decimal" readonly>
+            <span class="currency-badge">₹</span>
+          </div>
+        </div>
+      </div>
+      <div class="btn-row-center">
+        <button class="btn btn-primary btn-calc" onclick="calculate()">
+          🧮 <span data-en="Calculate" data-mr="मोजा">Calculate</span>
+        </button>
+      </div>
+      <div id="remain" class="remain-display hidden"></div>
+    </div>
+
+    <!-- SAVE OPTIONS (after import) -->
+    <div id="saveOptionsBar" class="save-options-bar hidden">
+      <p class="save-label" data-en="Imported data loaded. Choose save option:" data-mr="आयात केलेला डेटा लोड आहे. जतन पर्याय निवडा:">Imported data loaded. Choose save option:</p>
+      <div class="btn-row">
+        <!-- <button class="btn btn-success" onclick="saveOverwrite()">
+          ✏️ <span data-en="Overwrite Existing" data-mr="विद्यमान अपडेट करा">Overwrite Existing</span>
+        </button> -->
+        <button class="btn btn-info" onclick="saveAsNew()">
+          ➕ <span data-en="Save as New" data-mr="नवीन म्हणून जतन करा">Save as New</span>
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- RESULT MODAL -->
+  <div class="modal-overlay hidden" id="resultModal" onclick="handleModalClick(event)">
+    <div class="modal-box" id="pdfPrintArea">
+      <div class="modal-header-bar">
+        <div class="modal-brand">
+          <img src="calculator-solid-full.svg" width="24" height="24" alt="">
+          <span data-en="Expense Summary" data-mr="खर्चाचा सारांश">Expense Summary</span>
+        </div>
+        <div class="modal-date" id="modalDate"></div>
+      </div>
+      <div class="modal-table-wrap">
+        <table class="result-table" id="myTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th data-en="Title" data-mr="शीर्षक">Title</th>
+              <th data-en="Amount" data-mr="रक्कम">Amount</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+          <tfoot>
+            <tr class="total-row">
+              <td colspan="2" data-en="Total Expense" data-mr="एकूण खर्च">Total Expense</td>
+              <td id="totalex">—</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <div class="modal-summary">
+        <div class="summary-row sr-amount">
+          <span data-en="Amount" data-mr="रक्कम">Amount</span>
+          <strong id="M_amount">—</strong>
+        </div>
+        <div class="summary-row sr-expense">
+          <span data-en="Total Expense" data-mr="एकूण खर्च">Total Expense</span>
+          <strong id="M_expense">—</strong>
+        </div>
+        <div class="summary-row sr-remain">
+          <span data-en="Remaining Money" data-mr="शिल्लक रक्कम">Remaining Money</span>
+          <strong id="M_remain">—</strong>
+        </div>
+      </div>
+      <div class="modal-footer-bar no-print">
+        <button class="btn btn-secondary" onclick="closeModal()">
+          <span data-en="Close" data-mr="बंद करा">Close</span>
+        </button>
+        <button class="btn btn-danger" onclick="exportPDF()">
+          📄 <span data-en="PDF" data-mr="PDF">PDF</span>
+        </button>
+        <button class="btn btn-info" onclick="exportImage()">
+          🖼️ <span data-en="Image" data-mr="प्रतिमा">Image</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="app-footer">
+    <img src="calculator-solid-full.svg" width="18" height="18" alt="">
+    <span data-en="Simplify Your Daily Calculations" data-mr="आपल्या दैनंदिन हिशेबाला सोपे करा">Simplify Your Daily Calculations</span>
+  </footer>
+
+  <!-- MARATHI KEYPAD — fixed bottom, like real mobile keyboard -->
+  <div id="marathiKeypad" class="marathi-keypad-fixed hidden">
+    <div class="keypad-topbar">
+      <span class="keypad-active-label" id="keypadActiveLabel">—</span>
+      <button class="keypad-done-btn" onclick="closeMarathiKeypad()" data-en="Done ✓" data-mr="झाले ✓">Done ✓</button>
+    </div>
+    <div class="keypad-grid">
+      <button class="key-btn" onclick="insertMarathiNum('७')">७<small>7</small></button>
+      <button class="key-btn" onclick="insertMarathiNum('८')">८<small>8</small></button>
+      <button class="key-btn" onclick="insertMarathiNum('९')">९<small>9</small></button>
+      <button class="key-btn" onclick="insertMarathiNum('४')">४<small>4</small></button>
+      <button class="key-btn" onclick="insertMarathiNum('५')">५<small>5</small></button>
+      <button class="key-btn" onclick="insertMarathiNum('६')">६<small>6</small></button>
+      <button class="key-btn" onclick="insertMarathiNum('१')">१<small>1</small></button>
+      <button class="key-btn" onclick="insertMarathiNum('२')">२<small>2</small></button>
+      <button class="key-btn" onclick="insertMarathiNum('३')">३<small>3</small></button>
+      <button class="key-btn key-zero" onclick="insertMarathiNum('०')">०<small>0</small></button>
+      <button class="key-btn" onclick="insertMarathiNum('.')">.<small>.</small></button>
+      <button class="key-btn key-del" onclick="marathiBackspace()">⌫</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- pdfMake + YOUR vfs_fonts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+  <script src="vfs_fonts.js"></script>
+  <!-- pdf.js for reading PDF on import -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <!-- html2canvas for image export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
