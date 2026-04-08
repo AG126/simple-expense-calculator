@@ -43,12 +43,52 @@ function commaNum(amount) {
 }
 
 // ── LANGUAGE ──
+// function toggleLanguage() {
+//   currentLang = currentLang==='en' ? 'mr' : 'en';
+//   applyLanguage();
+//   updateInputModes();
+//   autoSave();
+// }
 function toggleLanguage() {
-  currentLang = currentLang==='en' ? 'mr' : 'en';
+  currentLang = currentLang === 'en' ? 'mr' : 'en';
+
   applyLanguage();
   updateInputModes();
+
+  // refresh expense field
+  getExpense();
+
+  // refresh amount input value
+  const amountInput = document.getElementById('amount');
+  const expenseInput = document.getElementById('expense');
+
+  if (amountInput.value) {
+    const val = m2e(amountInput.value);
+    amountInput.value =
+      currentLang === 'mr' ? e2m(val) : val;
+  }
+
+  if (expenseInput.value) {
+    const val = m2e(expenseInput.value);
+    expenseInput.value =
+      currentLang === 'mr' ? e2m(val) : val;
+  }
+
+  // refresh remaining
+  if (calculateDone) {
+    const remEl = document.getElementById('remain');
+    const rs = commaNum(String(rem));
+
+    remEl.textContent =
+      currentLang === 'mr'
+        ? 'शिल्लक: ₹' + e2m(rs)
+        : 'Remaining: ₹' + rs;
+  }
+
   autoSave();
 }
+
+
 
 function applyLanguage() {
   const mr = currentLang==='mr';
@@ -232,19 +272,87 @@ document.getElementById('inputRows').addEventListener('input', e => {
   }
 });
 
+// function getExpense() {
+//   let add=0;
+//   document.querySelectorAll('#inputRows .amount-input').forEach(ip => {
+//     const v=parseFloat(m2e(ip.value));
+//     if(isNum(v)) add+=v;
+//   });
+//   const es=document.getElementById('expenseShow');
+//   if(add>0){
+//     es.dataset.rawValue=add;
+//     es.textContent=(currentLang==='mr'?'+ ₹'+e2m(commaNum(String(add))):'+ ₹'+commaNum(String(add)));
+//     document.getElementById('expense').value=add;
+//   } else {
+//     es.dataset.rawValue=''; es.textContent='—';
+//   }
+// }
+
 function getExpense() {
-  let add=0;
+  let add = 0;
+
   document.querySelectorAll('#inputRows .amount-input').forEach(ip => {
-    const v=parseFloat(m2e(ip.value));
-    if(isNum(v)) add+=v;
+    const v = parseFloat(m2e(ip.value));
+    if (isNum(v)) add += v;
   });
-  const es=document.getElementById('expenseShow');
-  if(add>0){
-    es.dataset.rawValue=add;
-    es.textContent=(currentLang==='mr'?'+ ₹'+e2m(commaNum(String(add))):'+ ₹'+commaNum(String(add)));
-    document.getElementById('expense').value=add;
+
+  const es = document.getElementById('expenseShow');
+  const expenseInput = document.getElementById('expense');
+
+  if (add > 0) {
+    es.dataset.rawValue = add;
+
+    const formattedDisplay =
+      currentLang === 'mr'
+        ? e2m(commaNum(String(add)))
+        : commaNum(String(add));
+
+    const formattedInput =
+      currentLang === 'mr'
+        ? e2m(String(add))
+        : String(add);
+
+    es.textContent = '+ ₹' + formattedDisplay;
+
+    // IMPORTANT FIX
+    expenseInput.value = formattedInput;
   } else {
-    es.dataset.rawValue=''; es.textContent='—';
+    es.dataset.rawValue = '';
+    es.textContent = '—';
+    expenseInput.value = '';
+  }
+}
+function getExpense() {
+  let add = 0;
+
+  document.querySelectorAll('#inputRows .amount-input').forEach(ip => {
+    const v = parseFloat(m2e(ip.value));
+    if (isNum(v)) add += v;
+  });
+
+  const es = document.getElementById('expenseShow');
+  const expenseInput = document.getElementById('expense');
+
+  if (add > 0) {
+    es.dataset.rawValue = add;
+
+    // FIX value rendering by language
+    const formatted =
+      currentLang === 'mr'
+        ? e2m(commaNum(String(add)))
+        : commaNum(String(add));
+
+    es.textContent = '+ ₹' + formatted;
+
+    // IMPORTANT: input value also update in Marathi
+    expenseInput.value =
+      currentLang === 'mr'
+        ? e2m(String(add))
+        : String(add);
+  } else {
+    es.dataset.rawValue = '';
+    es.textContent = '—';
+    expenseInput.value = '';
   }
 }
 
@@ -252,6 +360,7 @@ function getExpense() {
 function calculate() {
   const rawAm = m2e(document.getElementById('amount').value);
   const rawEx = m2e(document.getElementById('expense').value);
+
   am = parseFloat(rawAm); ex = parseFloat(rawEx);
   if(!isNum(am)||am<=0){ showToast(currentLang==='mr'?'रक्कम टाका':'Enter your amount','error'); return; }
   if(!isNum(ex)||ex<=0){ showToast(currentLang==='mr'?'खर्च टाका':'Enter expenses','error'); return; }
