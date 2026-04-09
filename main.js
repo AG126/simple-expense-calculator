@@ -145,15 +145,16 @@ function applyLanguage() {
 
 function updateInputModes() {
   const mr = currentLang === 'mr';
-  document.querySelectorAll('.amt-input,.qty-input,#expAmount,#expTotal,#qtyBudget,#qtyTotalDisp,#catBudget,#catTotalDisp').forEach(inp => {
+  // Include cat-item-amt so category amount fields also get the Marathi keypad
+  document.querySelectorAll('.amt-input,.qty-input,.cat-item-amt,#expAmount,#expTotal,#qtyBudget,#qtyTotalDisp,#catBudget,#catTotalDisp').forEach(inp => {
     if (mr) {
       inp.setAttribute('readonly', '');
-      inp.setAttribute('inputmode', 'none');  // Disable native keyboard, use custom keypad
+      inp.setAttribute('inputmode', 'none'); // Disable native keyboard, use custom Marathi keypad
     } else {
       if (!['expTotal','qtyTotalDisp','catTotalDisp'].includes(inp.id)) {
         inp.removeAttribute('readonly');
       }
-      inp.setAttribute('inputmode', 'tel');  // 'tel' mode shows numeric keypad only (no letters)
+      inp.setAttribute('inputmode', 'tel'); // numeric-only native keypad for English
     }
   });
   if (!mr) closeMarathiKeypad();
@@ -166,18 +167,31 @@ function openMarathiKeypad(el) {
   if (currentLang !== 'mr') return;
   activeInput = el;
   const label = el.dataset.label || el.placeholder || '—';
-  document.getElementById('keypadActiveLabel').textContent = label + ': ';  // Show field label like "प्रमाण:" or "किंमत:"
+  document.getElementById('keypadActiveLabel').textContent = label + ': ';
   const kp = document.getElementById('marathiKeypad');
+
+  // Remove hidden so it enters the layout flow (but still translateY(100%) off-screen)
   kp.classList.remove('hidden');
-  requestAnimationFrame(() => {
-    document.documentElement.style.setProperty('--keypad-h', kp.offsetHeight + 'px');
-    kp.classList.add('keypad-visible');
-    document.body.classList.add('keypad-open');
-    keypadOpen = true;
-    setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 250);
-  });
-  document.querySelectorAll('.form-input').forEach(i => i.classList.remove('active-input'));
+  kp.classList.remove('keypad-visible');
+
+  // Highlight active input immediately
+  document.querySelectorAll('.form-input,.amt-input,.qty-input,.cat-item-amt').forEach(i => i.classList.remove('active-input'));
   el.classList.add('active-input');
+
+  // Double rAF: first frame triggers display, second frame has real offsetHeight
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const h = kp.offsetHeight || 280;
+      document.documentElement.style.setProperty('--keypad-h', h + 'px');
+      kp.classList.add('keypad-visible');
+      document.body.classList.add('keypad-open');
+      keypadOpen = true;
+      // Scroll after transition finishes (220ms) so element isn't still behind keypad
+      setTimeout(() => {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 260);
+    });
+  });
 }
 
 function closeMarathiKeypad() {
@@ -185,8 +199,9 @@ function closeMarathiKeypad() {
   kp.classList.remove('keypad-visible');
   document.body.classList.remove('keypad-open');
   keypadOpen = false;
-  document.querySelectorAll('.form-input').forEach(i => i.classList.remove('active-input'));
-  setTimeout(() => { if (!keypadOpen) kp.classList.add('hidden'); }, 240);
+  activeInput = null;
+  document.querySelectorAll('.form-input,.amt-input,.qty-input,.cat-item-amt').forEach(i => i.classList.remove('active-input'));
+  setTimeout(() => { if (!keypadOpen) kp.classList.add('hidden'); }, 260);
 }
 
 function kp(char) {
@@ -217,14 +232,24 @@ function kpDel() {
   activeInput.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
+// Helper: all numeric inputs that use the Marathi keypad
+function isNumericInput(el) {
+  return el.classList.contains('amt-input') ||
+         el.classList.contains('qty-input') ||
+         el.classList.contains('cat-item-amt') ||
+         ['expAmount','qtyBudget','catBudget'].includes(el.id);
+}
+const READONLY_IDS = ['expTotal','qtyTotalDisp','catTotalDisp'];
+
+// Open keypad on click (Marathi mode)
 document.addEventListener('click', e => {
   if (currentLang !== 'mr') return;
   const inp = e.target;
-  const isAmt = inp.classList.contains('amt-input') || inp.classList.contains('qty-input')
-    || ['expAmount','expTotal','qtyBudget','qtyTotalDisp','catBudget','catTotalDisp'].includes(inp.id);
-  if (isAmt && !['expTotal','qtyTotalDisp','catTotalDisp'].includes(inp.id)) {
+  if (isNumericInput(inp)) {
     e.preventDefault();
     openMarathiKeypad(inp);
+  } else if (READONLY_IDS.includes(inp.id)) {
+    e.preventDefault(); // block native keyboard on read-only display fields
   }
 });
 
@@ -234,20 +259,20 @@ document.addEventListener('input', e => {
   }
 });
 
+// Blur native keyboard on touch (Marathi mode) to prevent it appearing
 document.addEventListener('touchstart', e => {
   if (currentLang !== 'mr') return;
   const inp = e.target;
-  const isAmt = inp.classList.contains('amt-input') || inp.classList.contains('qty-input')
-    || ['expAmount','qtyBudget','catBudget'].includes(inp.id);
-  if (isAmt) inp.blur();
+  if (isNumericInput(inp)) { inp.blur(); }
 }, { passive: true });
 
+// Close keypad when tapping outside any numeric input or keypad itself
 document.addEventListener('click', e => {
   if (!keypadOpen) return;
   const kpEl = document.getElementById('marathiKeypad');
-  const isInp = e.target.classList.contains('amt-input') || e.target.classList.contains('qty-input')
-    || ['expAmount','qtyBudget','catBudget'].includes(e.target.id);
-  if (!isInp && !kpEl.contains(e.target)) closeMarathiKeypad();
+  if (!isNumericInput(e.target) && !READONLY_IDS.includes(e.target.id) && !kpEl.contains(e.target)) {
+    closeMarathiKeypad();
+  }
 });
 
 document.addEventListener('input', e => {
@@ -1996,182 +2021,16 @@ async function catImportFromPDF(file) {
   }
 }
 // ────────────────────────────────────────────
-// // ── CALCULATOR 4 — BASIC CALCULATOR ──
-// // ────────────────────────────────────────────
-// (function() {
-//   let bcCurrent = '0';   // what's shown on display
-//   let bcPrev    = '';    // previous operand (string)
-//   let bcOp      = '';    // pending operator
-//   let bcExpr    = '';    // expression string for top display
-//   let bcJustEq  = false; // did we just press =?
-//   let bcHistory = [];    // [{expr, result}]
-//   let bcOpActive = null; // currently highlighted op button
-
-//   const MR_DIGITS = {'0':'०','1':'१','2':'२','3':'३','4':'४','5':'५','6':'६','7':'७','8':'८','9':'९'};
-//   const EN_DIGITS = {'०':'0','१':'1','२':'2','३':'3','४':'4','५':'5','६':'6','७':'7','८':'8','९':'9'};
-
-//   function bcToEN(s) { return String(s).replace(/[०-९]/g, c => EN_DIGITS[c] || c); }
-//   function bcToMR(s) { return String(s).replace(/[0-9]/g, c => MR_DIGITS[c] || c); }
-//   function bcLocalize(s) {
-//     const mr = currentLang === 'mr';
-//     return mr ? bcToMR(String(s)) : String(s);
-//   }
-
-//   function bcUpdateDisplay() {
-//     const valEl  = document.getElementById('basicCalcVal');
-//     const exprEl = document.getElementById('basicCalcExpr');
-//     if (!valEl) return;
-//     valEl.textContent  = bcLocalize(bcCurrent);
-//     exprEl.textContent = bcLocalize(bcExpr);
-//     // highlight active op button
-//     document.querySelectorAll('.bc-op').forEach(b => b.classList.remove('bc-op-active'));
-//     if (bcOp && !bcJustEq) {
-//       document.querySelectorAll('.bc-op').forEach(b => {
-//         if (b.textContent.trim() === bcOp) b.classList.add('bc-op-active');
-//       });
-//     }
-//   }
-
-//   function bcApplyOp(a, op, b) {
-//     a = parseFloat(a); b = parseFloat(b);
-//     if (op === '+') return a + b;
-//     if (op === '−') return a - b;
-//     if (op === '×') return a * b;
-//     if (op === '÷') return b === 0 ? 'Error' : a / b;
-//     return b;
-//   }
-
-//   function bcFormat(n) {
-//     if (n === 'Error') return 'Error';
-//     // trim floating point noise
-//     let s = parseFloat(n.toPrecision(12));
-//     return String(s);
-//   }
-
-//   window.bcAction = function(type, val) {
-//     switch(type) {
-//       case 'clear':
-//         bcCurrent = '0'; bcPrev = ''; bcOp = ''; bcExpr = ''; bcJustEq = false;
-//         break;
-
-//       case 'sign':
-//         if (bcCurrent !== '0' && bcCurrent !== 'Error') {
-//           bcCurrent = bcCurrent.startsWith('-') ? bcCurrent.slice(1) : '-' + bcCurrent;
-//         }
-//         break;
-
-//       case 'pct':
-//         if (bcCurrent !== 'Error') {
-//           bcCurrent = bcFormat(parseFloat(bcCurrent) / 100);
-//         }
-//         break;
-
-//       case 'num':
-//         if (bcCurrent === 'Error') { bcCurrent = val; break; }
-//         if (bcJustEq) { bcCurrent = val; bcJustEq = false; bcExpr = ''; break; }
-//         if (bcCurrent === '0' || bcCurrent === '-0') bcCurrent = (bcCurrent === '-0' ? '-' : '') + val;
-//         else if (bcCurrent.length < 15) bcCurrent += val;
-//         break;
-
-//       case 'dot':
-//         if (bcJustEq) { bcCurrent = '0.'; bcJustEq = false; bcExpr = ''; break; }
-//         if (!bcCurrent.includes('.')) bcCurrent += '.';
-//         break;
-
-//       case 'op':
-//         if (bcCurrent === 'Error') break;
-//         if (bcOp && bcPrev !== '' && !bcJustEq) {
-//           // chain operations
-//           const res = bcApplyOp(bcPrev, bcOp, bcCurrent);
-//           if (res === 'Error') { bcCurrent = 'Error'; bcPrev = ''; bcOp = ''; bcExpr = ''; break; }
-//           bcCurrent = bcFormat(res);
-//         }
-//         bcPrev = bcCurrent; bcOp = val; bcJustEq = false;
-//         bcExpr = bcCurrent + ' ' + val;
-//         break;
-
-//       case 'eq':
-//         if (!bcOp || bcPrev === '') break;
-//         const a = bcPrev, b = bcCurrent, op = bcOp;
-//         const res = bcApplyOp(a, op, b);
-//         const fullExpr = a + ' ' + op + ' ' + b + ' =';
-//         if (res === 'Error') {
-//           bcCurrent = 'Error';
-//         } else {
-//           bcCurrent = bcFormat(res);
-//           // add to history
-//           bcHistory.unshift({ expr: fullExpr, result: bcCurrent });
-//           if (bcHistory.length > 30) bcHistory.pop();
-//           bcRenderHistory();
-//         }
-//         bcExpr = fullExpr;
-//         bcPrev = ''; bcOp = ''; bcJustEq = true;
-//         break;
-//     }
-//     bcUpdateDisplay();
-//   };
-
-//   function bcRenderHistory() {
-//     const mr = currentLang === 'mr';
-//     const el = document.getElementById('basicCalcHistory');
-//     const empty = document.getElementById('bcHistEmpty');
-//     if (!el) return;
-//     if (bcHistory.length === 0) {
-//       if (empty) empty.style.display = '';
-//       // remove rows
-//       el.querySelectorAll('.bc-history-row').forEach(r => r.remove());
-//       return;
-//     }
-//     if (empty) empty.style.display = 'none';
-//     el.querySelectorAll('.bc-history-row').forEach(r => r.remove());
-//     bcHistory.forEach(h => {
-//       const row = document.createElement('div');
-//       row.className = 'bc-history-row';
-//       row.innerHTML = `<span class="bc-history-expr">${bcLocalize(h.expr)}</span><span class="bc-history-result">${bcLocalize(h.result)}</span>`;
-//       row.style.cursor = 'pointer';
-//       row.addEventListener('click', () => {
-//         bcCurrent = h.result; bcPrev = ''; bcOp = ''; bcJustEq = false; bcExpr = '';
-//         bcUpdateDisplay();
-//       });
-//       el.appendChild(row);
-//     });
-//   }
-
-//   window.bcClearHistory = function() {
-//     bcHistory = []; bcRenderHistory();
-//   };
-
-//   // Re-localize display when language changes
-//   const _origApply = window.applyLanguage;
-//   window.applyLanguage = function() {
-//     _origApply && _origApply();
-//     // relabel digit buttons
-//     const mr = currentLang === 'mr';
-//     document.querySelectorAll('#basicCalcGrid .bc-btn[data-mr]').forEach(b => {
-//       const key = b.getAttribute(mr ? 'data-mr' : 'data-en');
-//       if (key) b.textContent = key;
-//     });
-//     bcUpdateDisplay();
-//     bcRenderHistory();
-//     // relabel history empty text
-//     const empty = document.getElementById('bcHistEmpty');
-//     if (empty) empty.textContent = mr ? 'अद्याप कोणतेही गणना नाही' : 'No calculations yet';
-//   };
-
-//   // init on load
-//   document.addEventListener('DOMContentLoaded', function() {
-//     bcUpdateDisplay();
-//   });
-// })();
-
-// ── CALCULATOR 4 — BASIC CALCULATOR (FIXED) ──
+// ── CALCULATOR 4 — BASIC CALCULATOR ──
+// ────────────────────────────────────────────
 (function() {
-  let bcCurrent = '0';
-  let bcPrev    = '';
-  let bcOp      = '';
-  let bcExpr    = '';
-  let bcJustEq  = false;
-  let bcHistory = [];
+  let bcCurrent = '0';   // what's shown on display
+  let bcPrev    = '';    // previous operand (string)
+  let bcOp      = '';    // pending operator
+  let bcExpr    = '';    // expression string for top display
+  let bcJustEq  = false; // did we just press =?
+  let bcHistory = [];    // [{expr, result}]
+  let bcOpActive = null; // currently highlighted op button
 
   const MR_DIGITS = {'0':'०','1':'१','2':'२','3':'३','4':'४','5':'५','6':'६','7':'७','8':'८','9':'९'};
   const EN_DIGITS = {'०':'0','१':'1','२':'2','३':'3','४':'4','५':'5','६':'6','७':'7','८':'8','९':'9'};
@@ -2179,17 +2038,17 @@ async function catImportFromPDF(file) {
   function bcToEN(s) { return String(s).replace(/[०-९]/g, c => EN_DIGITS[c] || c); }
   function bcToMR(s) { return String(s).replace(/[0-9]/g, c => MR_DIGITS[c] || c); }
   function bcLocalize(s) {
-    return currentLang === 'mr' ? bcToMR(String(s)) : String(s);
+    const mr = currentLang === 'mr';
+    return mr ? bcToMR(String(s)) : String(s);
   }
 
   function bcUpdateDisplay() {
     const valEl  = document.getElementById('basicCalcVal');
     const exprEl = document.getElementById('basicCalcExpr');
     if (!valEl) return;
-
-    valEl.textContent  = bcLocalize(bcCurrent || '0');
+    valEl.textContent  = bcLocalize(bcCurrent);
     exprEl.textContent = bcLocalize(bcExpr);
-
+    // highlight active op button
     document.querySelectorAll('.bc-op').forEach(b => b.classList.remove('bc-op-active'));
     if (bcOp && !bcJustEq) {
       document.querySelectorAll('.bc-op').forEach(b => {
@@ -2209,25 +2068,20 @@ async function catImportFromPDF(file) {
 
   function bcFormat(n) {
     if (n === 'Error') return 'Error';
-    return String(parseFloat(Number(n).toPrecision(12)));
+    // trim floating point noise
+    let s = parseFloat(n.toPrecision(12));
+    return String(s);
   }
 
   window.bcAction = function(type, val) {
     switch(type) {
-
       case 'clear':
-        bcCurrent = '0';
-        bcPrev = '';
-        bcOp = '';
-        bcExpr = '';
-        bcJustEq = false;
+        bcCurrent = '0'; bcPrev = ''; bcOp = ''; bcExpr = ''; bcJustEq = false;
         break;
 
       case 'sign':
         if (bcCurrent !== '0' && bcCurrent !== 'Error') {
-          bcCurrent = bcCurrent.startsWith('-')
-            ? bcCurrent.slice(1)
-            : '-' + bcCurrent;
+          bcCurrent = bcCurrent.startsWith('-') ? bcCurrent.slice(1) : '-' + bcCurrent;
         }
         break;
 
@@ -2238,139 +2092,99 @@ async function catImportFromPDF(file) {
         break;
 
       case 'num':
-        if (bcCurrent === 'Error') {
-          bcCurrent = val;
-          break;
-        }
-
-        if (bcJustEq) {
-          bcCurrent = val;
-          bcJustEq = false;
-          bcExpr = '';
-          break;
-        }
-
-        if (bcCurrent === '0') {
-          bcCurrent = val;
-        } else {
-          bcCurrent += val;
-        }
+        if (bcCurrent === 'Error') { bcCurrent = val; break; }
+        if (bcJustEq) { bcCurrent = val; bcJustEq = false; bcExpr = ''; break; }
+        if (bcCurrent === '0' || bcCurrent === '-0') bcCurrent = (bcCurrent === '-0' ? '-' : '') + val;
+        else if (bcCurrent.length < 15) bcCurrent += val;
         break;
 
       case 'dot':
-        if (bcJustEq) {
-          bcCurrent = '0.';
-          bcJustEq = false;
-          bcExpr = '';
-          break;
-        }
-
-        if (!bcCurrent.includes('.')) {
-          bcCurrent += '.';
-        }
+        if (bcJustEq) { bcCurrent = '0.'; bcJustEq = false; bcExpr = ''; break; }
+        if (!bcCurrent.includes('.')) bcCurrent += '.';
         break;
 
       case 'op':
         if (bcCurrent === 'Error') break;
-
         if (bcOp && bcPrev !== '' && !bcJustEq) {
+          // chain operations
           const res = bcApplyOp(bcPrev, bcOp, bcCurrent);
-
-          if (res === 'Error') {
-            bcCurrent = 'Error';
-            bcPrev = '';
-            bcOp = '';
-            bcExpr = '';
-            break;
-          }
-
+          if (res === 'Error') { bcCurrent = 'Error'; bcPrev = ''; bcOp = ''; bcExpr = ''; break; }
           bcCurrent = bcFormat(res);
         }
-
-        bcPrev = bcCurrent;
-        bcOp = val;
-        bcJustEq = false;
+        bcPrev = bcCurrent; bcOp = val; bcJustEq = false;
         bcExpr = bcCurrent + ' ' + val;
-
-        bcCurrent = ''; // ✅ FIX: reset for next number
-
         break;
 
       case 'eq':
         if (!bcOp || bcPrev === '') break;
-
-        const a = bcPrev;
-        const b = bcCurrent || '0';
-        const op = bcOp;
-
+        const a = bcPrev, b = bcCurrent, op = bcOp;
         const res = bcApplyOp(a, op, b);
         const fullExpr = a + ' ' + op + ' ' + b + ' =';
-
         if (res === 'Error') {
           bcCurrent = 'Error';
         } else {
           bcCurrent = bcFormat(res);
-
+          // add to history
           bcHistory.unshift({ expr: fullExpr, result: bcCurrent });
           if (bcHistory.length > 30) bcHistory.pop();
-
           bcRenderHistory();
         }
-
         bcExpr = fullExpr;
-        bcPrev = '';
-        bcOp = '';
-        bcJustEq = true;
-
+        bcPrev = ''; bcOp = ''; bcJustEq = true;
         break;
     }
-
     bcUpdateDisplay();
   };
 
   function bcRenderHistory() {
+    const mr = currentLang === 'mr';
     const el = document.getElementById('basicCalcHistory');
     const empty = document.getElementById('bcHistEmpty');
     if (!el) return;
-
     if (bcHistory.length === 0) {
       if (empty) empty.style.display = '';
+      // remove rows
       el.querySelectorAll('.bc-history-row').forEach(r => r.remove());
       return;
     }
-
     if (empty) empty.style.display = 'none';
     el.querySelectorAll('.bc-history-row').forEach(r => r.remove());
-
     bcHistory.forEach(h => {
       const row = document.createElement('div');
       row.className = 'bc-history-row';
-
-      row.innerHTML = `
-        <span class="bc-history-expr">${bcLocalize(h.expr)}</span>
-        <span class="bc-history-result">${bcLocalize(h.result)}</span>
-      `;
-
+      row.innerHTML = `<span class="bc-history-expr">${bcLocalize(h.expr)}</span><span class="bc-history-result">${bcLocalize(h.result)}</span>`;
+      row.style.cursor = 'pointer';
       row.addEventListener('click', () => {
-        bcCurrent = h.result;
-        bcPrev = '';
-        bcOp = '';
-        bcJustEq = false;
-        bcExpr = '';
+        bcCurrent = h.result; bcPrev = ''; bcOp = ''; bcJustEq = false; bcExpr = '';
         bcUpdateDisplay();
       });
-
       el.appendChild(row);
     });
   }
 
   window.bcClearHistory = function() {
-    bcHistory = [];
-    bcRenderHistory();
+    bcHistory = []; bcRenderHistory();
   };
 
+  // Re-localize display when language changes
+  const _origApply = window.applyLanguage;
+  window.applyLanguage = function() {
+    _origApply && _origApply();
+    // relabel digit buttons
+    const mr = currentLang === 'mr';
+    document.querySelectorAll('#basicCalcGrid .bc-btn[data-mr]').forEach(b => {
+      const key = b.getAttribute(mr ? 'data-mr' : 'data-en');
+      if (key) b.textContent = key;
+    });
+    bcUpdateDisplay();
+    bcRenderHistory();
+    // relabel history empty text
+    const empty = document.getElementById('bcHistEmpty');
+    if (empty) empty.textContent = mr ? 'अद्याप कोणतेही गणना नाही' : 'No calculations yet';
+  };
+
+  // init on load
   document.addEventListener('DOMContentLoaded', function() {
     bcUpdateDisplay();
   });
-
 })();

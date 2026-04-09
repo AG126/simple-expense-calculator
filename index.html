@@ -211,16 +211,7 @@ body.keypad-open{padding-bottom:calc(56px + var(--keypad-h,280px))}
 .app-footer{position:fixed;bottom:0;left:0;right:0;background:var(--footer-bg);color:var(--footer-text);text-align:center;padding:11px;font-size:.76rem;display:flex;align-items:center;justify-content:center;gap:6px;z-index:100}
 
 /* MARATHI KEYPAD */
-.bc-btn{background:var(--surface2);color:var(--text);border:none;padding:0;height:64px;font-size:1.25rem;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:filter .12s,background .12s;-webkit-tap-highlight-color:transparent;user-select:none}
-.bc-btn:active{filter:brightness(.85)}
-.bc-fn{background:var(--border);color:var(--text)}
-.bc-op{background:#ff9f0a;color:#fff;font-size:1.4rem}
-.bc-op.bc-op-active{background:#fff;color:#ff9f0a}
-.bc-eq{background:#30d158;color:#fff;font-size:1.4rem}
-.bc-history-row{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid var(--border);font-size:.84rem;gap:8px}
-.bc-history-expr{color:var(--text-muted)}
-.bc-history-result{font-weight:700;color:var(--text)}
-position:fixed;bottom:0;left:0;right:0;z-index:1500;background:var(--keypad-bg);border-top:1px solid var(--border);box-shadow:0 -4px 16px rgba(0,0,0,.18);padding:0 0 env(safe-area-inset-bottom,8px) 0;transform:translateY(100%);transition:transform .22s cubic-bezier(.4,0,.2,1);will-change:transform}
+.marathi-keypad-fixed{position:fixed;bottom:0;left:0;right:0;z-index:1500;background:var(--keypad-bg);border-top:1px solid var(--border);box-shadow:0 -4px 16px rgba(0,0,0,.18);padding:0 0 env(safe-area-inset-bottom,8px) 0;transform:translateY(100%);transition:transform .22s cubic-bezier(.4,0,.2,1);will-change:transform}
 .marathi-keypad-fixed.keypad-visible{transform:translateY(0)}
 .keypad-topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 14px 6px;background:var(--surface2);border-bottom:1px solid var(--border)}
 .keypad-active-label{font-size:.83rem;color:var(--text-muted);font-weight:500;font-family:'Noto Sans Devanagari',sans-serif}

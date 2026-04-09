@@ -46,7 +46,15 @@ body{
   line-height:1.6;
 }
 /* when marathi keypad is open, push body up */
-body.keypad-open { padding-bottom: calc(72px + var(--keypad-h, 280px)); }
+body.keypad-open { padding-bottom: calc(72px + var(--keypad-h, 280px) + env(safe-area-inset-bottom, 0px)); }
+
+/* Active input highlight when Marathi keypad is open */
+.active-input {
+  outline: 2px solid var(--primary) !important;
+  outline-offset: 1px;
+  background: var(--primary-light, rgba(99,102,241,.08)) !important;
+  transition: outline .15s, background .15s;
+}
 
 /* ── NAVBAR ── */
 .navbar-fixed{position:fixed;top:0;left:0;right:0;z-index:1000}
