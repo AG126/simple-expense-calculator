@@ -1,231 +1,657 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Expense Calculator / खर्च कॅल्क्युलेटर</title>
-  <link rel="stylesheet" href="main.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expense Calculator / खर्च कॅल्क्युलेटर</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* =============================================
+   EXPENSE CALCULATOR SUITE — STYLES v6
+   ============================================= */
+:root{
+  --bg:#f0f4f8;--surface:#fff;--surface2:#f8fafc;--border:#e2e8f0;
+  --text:#1a202c;--text-muted:#64748b;
+  --primary:#2563eb;--primary-h:#1d4ed8;--primary-light:#dbeafe;
+  --success:#16a34a;--success-bg:#f0fdf4;
+  --danger:#dc2626;--danger-bg:#fff1f2;
+  --info:#0891b2;--secondary:#64748b;
+  --nav-bg:#1e293b;--nav-text:#f8fafc;
+  --footer-bg:#1e293b;--footer-text:#94a3b8;
+  --keypad-bg:#d1d5db;--keypad-key:#fff;--keypad-key-shadow:#959da5;
+  --shadow:0 1px 3px rgba(0,0,0,.10),0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:0 4px 6px -1px rgba(0,0,0,.10),0 2px 4px rgba(0,0,0,.06);
+  --shadow-lg:0 10px 15px -3px rgba(0,0,0,.10),0 4px 6px rgba(0,0,0,.05);
+  --r:12px;--r-sm:8px;--r-xs:6px;--tr:.18s ease;
+}
+[data-theme="dark"]{
+  --bg:#0f172a;--surface:#1e293b;--surface2:#253148;--border:#334155;
+  --text:#f1f5f9;--text-muted:#94a3b8;
+  --primary:#3b82f6;--primary-h:#2563eb;--primary-light:#1e3a5f;
+  --success:#22c55e;--success-bg:#14532d;
+  --danger:#ef4444;--danger-bg:#450a0a;--info:#22d3ee;
+  --nav-bg:#0f172a;--footer-bg:#0f172a;
+  --keypad-bg:#1e293b;--keypad-key:#2d3f55;--keypad-key-shadow:#0f172a;
+  --shadow:0 1px 3px rgba(0,0,0,.4);--shadow-md:0 4px 6px rgba(0,0,0,.4);--shadow-lg:0 10px 15px rgba(0,0,0,.4);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Noto Sans Devanagari','Inter',sans-serif;
+  background:var(--bg);color:var(--text);
+  min-height:100vh;padding-top:104px;padding-bottom:56px;
+  transition:background var(--tr),color var(--tr);line-height:1.6;
+}
+body.keypad-open{padding-bottom:calc(56px + var(--keypad-h,280px))}
+
+/* NAVBAR */
+.navbar-fixed{position:fixed;top:0;left:0;right:0;z-index:1000}
+.app-navbar{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--nav-bg);padding:0 14px;height:56px;box-shadow:var(--shadow-md);
+}
+.nav-brand{display:flex;align-items:center;gap:9px}
+.nav-icon{font-size:1.4rem}
+.nav-title{font-size:1rem;font-weight:700;color:var(--nav-text);line-height:1.2}
+.nav-sub{font-size:.7rem;color:#94a3b8;font-weight:400}
+.nav-actions{display:flex;align-items:center;gap:7px}
+.btn-icon{background:none;border:1.5px solid rgba(255,255,255,.2);border-radius:var(--r-xs);padding:6px 9px;cursor:pointer;font-size:1.1rem;color:var(--nav-text);transition:background var(--tr)}
+.btn-icon:hover{background:rgba(255,255,255,.12)}
+.btn-lang{background:var(--primary);color:#fff;border:none;border-radius:var(--r-xs);padding:7px 13px;font-size:.85rem;font-weight:600;cursor:pointer;transition:background var(--tr);font-family:'Noto Sans Devanagari',sans-serif}
+.btn-lang:hover{background:var(--primary-h)}
+
+/* CALC NAV TABS */
+.calc-nav{background:var(--nav-bg);border-top:1px solid rgba(255,255,255,.08);padding:0 14px;display:flex;gap:2px;overflow-x:auto}
+.calc-nav::-webkit-scrollbar{display:none}
+.calc-tab{padding:8px 14px;font-size:.78rem;font-weight:600;color:#94a3b8;border:none;background:none;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;font-family:'Noto Sans Devanagari','Inter',sans-serif}
+.calc-tab.active{color:#fff;border-bottom-color:var(--primary)}
+.calc-tab:hover:not(.active){color:#cbd5e1}
+
+/* PAGES */
+.calc-page{display:none}.calc-page.active{display:block}
+
+/* MAIN */
+.main-container{max-width:480px;margin:0 auto;padding:14px 12px 20px;display:flex;flex-direction:column;gap:12px}
+
+/* INFO CARD */
+.info-card{background:var(--primary-light);border:1px solid var(--primary);border-radius:var(--r);padding:10px 14px}
+.info-card p{font-size:.8rem;color:var(--text);line-height:1.5}
+
+/* ACTION BAR */
+.action-bar{display:flex;flex-wrap:wrap;gap:7px}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:15px;box-shadow:var(--shadow);transition:background var(--tr),border-color var(--tr)}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.card-title{font-size:.97rem;font-weight:700;color:var(--text)}
+.row-controls{display:flex;gap:5px;align-items:center}
+.btn-icon-round{background:none;border:none;cursor:pointer;padding:4px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background var(--tr);font-size:1.3rem}
+.btn-icon-round:hover{background:var(--border)}
+
+/* EXPENSE ROWS */
+.col-headers{display:grid;gap:8px;padding:0 4px 5px;font-size:.7rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em}
+.col-headers-2{grid-template-columns:1fr 1fr}
+.col-headers-3{grid-template-columns:1fr 80px 100px}
+.col-headers-3s{grid-template-columns:2fr 1fr}
+
+.input-rows-wrap{display:flex;flex-direction:column;gap:8px}
+.input-row{display:grid;gap:8px;align-items:center;animation:slideIn .18s ease}
+.input-row-2{grid-template-columns:1fr 1fr}
+.input-row-3{grid-template-columns:1fr 80px 100px}
+.input-row-3s{grid-template-columns:2fr 1fr}
+@keyframes slideIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+
+/* QTY ROW WRAPPER — for row + subtotal line */
+.qty-row-wrap{display:flex;flex-direction:column;gap:3px;padding-bottom:6px;border-bottom:1px solid var(--border);margin-bottom:2px}
+.qty-row-wrap:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.qty-subtotal-line{
+  font-size:.74rem;font-weight:600;color:var(--primary);
+  text-align:right;padding-right:4px;
+  min-height:16px;transition:opacity .15s;
+}
+.qty-subtotal-line.empty{color:var(--text-muted);font-weight:400}
+
+.form-input{
+  width:100%;padding:9px 11px;
+  background:var(--surface2);border:1.5px solid var(--border);
+  border-radius:var(--r-sm);color:var(--text);font-size:.9rem;
+  font-family:'Noto Sans Devanagari','Inter',sans-serif;
+  outline:none;transition:border-color var(--tr),box-shadow var(--tr);
+}
+.form-input:focus,.form-input.active-input{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.13)}
+.form-input::placeholder{color:var(--text-muted)}
+.form-input[readonly]{cursor:text}
+.form-input-sm{padding:7px 10px;font-size:.82rem}
+
+.amount-wrap{position:relative;display:flex;align-items:center}
+.amount-wrap .form-input{padding-right:26px}
+.input-with-badge{position:relative;display:flex;align-items:center}
+.input-with-badge .form-input{padding-right:26px}
+.currency-badge{position:absolute;right:9px;font-size:.78rem;font-weight:600;color:var(--text-muted);pointer-events:none}
+
+.total-bar{display:flex;justify-content:space-between;align-items:center;margin-top:11px;padding:9px 13px;background:var(--surface2);border-radius:var(--r-sm);border:1px solid var(--border);font-size:.86rem;color:var(--text-muted)}
+.total-bar-value{font-size:.95rem;font-weight:700;color:var(--danger)}
+
+/* SUMMARY CARD */
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:13px}
+.summary-field label{display:block;font-size:.72rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.text-center{text-align:center}
+.remain-display{margin-top:12px;padding:11px 15px;border-radius:var(--r-sm);font-size:.95rem;font-weight:700;text-align:center;background:var(--success-bg);color:var(--success);border:1.5px solid var(--success)}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:9px 15px;border:none;border-radius:var(--r-sm);font-size:.85rem;font-weight:600;cursor:pointer;transition:background var(--tr),transform .1s,box-shadow var(--tr);font-family:'Noto Sans Devanagari','Inter',sans-serif}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-h);box-shadow:var(--shadow-md)}
+.btn-danger{background:var(--danger);color:#fff}.btn-danger:hover{filter:brightness(1.08)}
+.btn-success{background:var(--success);color:#fff}.btn-success:hover{filter:brightness(1.08)}
+.btn-info{background:var(--info);color:#fff}.btn-info:hover{filter:brightness(1.08)}
+.btn-secondary{background:var(--secondary);color:#fff}.btn-secondary:hover{filter:brightness(1.08)}
+.btn-outline-sm{background:var(--surface);border:1.5px solid var(--border);color:var(--text);padding:7px 11px;font-size:.78rem;border-radius:var(--r-sm);cursor:pointer;display:inline-flex;align-items:center;gap:4px;font-weight:500;transition:background var(--tr),border-color var(--tr);font-family:'Noto Sans Devanagari','Inter',sans-serif}
+.btn-outline-sm:hover{background:var(--primary-light);border-color:var(--primary)}
+.btn-calc{padding:12px 28px;font-size:.95rem;border-radius:var(--r)}
+.btn-row-center{display:flex;justify-content:center}
+.btn-row{display:flex;flex-wrap:wrap;gap:9px}
+.btn-add-cat{width:100%;padding:10px;border:2px dashed var(--border);background:none;color:var(--text-muted);border-radius:var(--r-sm);cursor:pointer;font-size:.85rem;font-family:inherit;transition:border-color var(--tr),color var(--tr)}
+.btn-add-cat:hover{border-color:var(--primary);color:var(--primary)}
+
+/* SAVE OPTIONS */
+.save-options-bar{background:var(--surface);border:1.5px solid var(--primary);border-radius:var(--r);padding:13px 16px;box-shadow:var(--shadow)}
+.save-label{font-size:.84rem;margin-bottom:9px;color:var(--text-muted)}
+
+/* CATEGORY CARD */
+.cat-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:13px;box-shadow:var(--shadow);transition:background var(--tr)}
+.cat-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.cat-label-wrap{display:flex;align-items:center;gap:8px;flex:1}
+.cat-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.cat-name-input{flex:1;background:none;border:none;font-size:.93rem;font-weight:600;color:var(--text);outline:none;padding:0;font-family:inherit;cursor:text}
+.cat-name-input::placeholder{color:var(--text-muted);font-weight:400}
+.cat-total{font-size:.82rem;font-weight:600;color:var(--primary)}
+.cat-rows-wrap{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+.cat-row-controls{display:flex;gap:4px}
+.btn-cat-icon{background:none;border:none;cursor:pointer;font-size:1.1rem;padding:3px;border-radius:4px;transition:background var(--tr)}
+.btn-cat-icon:hover{background:var(--border)}
+.btn-remove-cat{background:var(--danger-bg);border:1px solid var(--danger);color:var(--danger);padding:4px 10px;border-radius:var(--r-xs);font-size:.75rem;cursor:pointer;font-family:inherit;transition:background var(--tr)}
+.btn-remove-cat:hover{background:var(--danger);color:#fff}
+
+/* CATEGORY GRAND TOTAL */
+.grand-total-card{background:linear-gradient(135deg,#1e293b 0%,#2563eb 100%);border-radius:var(--r);padding:16px;color:#fff}
+.grand-total-label{font-size:.8rem;color:#a0c4ff;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
+.grand-total-value{font-size:1.5rem;font-weight:700}
+.cat-summary-list{margin-top:12px;display:flex;flex-direction:column;gap:6px}
+.cat-summary-row{display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.1);border-radius:var(--r-xs);padding:7px 11px;font-size:.83rem}
+.cat-summary-dot{width:8px;height:8px;border-radius:50%;margin-right:7px;flex-shrink:0}
+.cat-summary-name{display:flex;align-items:center;flex:1;color:#e2e8f0}
+.cat-summary-amt{font-weight:700;color:#fff}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2000;display:flex;align-items:center;justify-content:center;padding:14px;backdrop-filter:blur(3px)}
+.modal-box{background:var(--surface);border-radius:var(--r);width:100%;max-width:420px;max-height:88vh;overflow-y:auto;box-shadow:var(--shadow-lg);animation:modalIn .2s ease}
+@keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-header-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 11px;border-bottom:1px solid var(--border)}
+.modal-brand{display:flex;align-items:center;gap:7px;font-weight:700;font-size:.95rem}
+.modal-date{font-size:.74rem;color:var(--text-muted)}
+.modal-table-wrap{padding:12px 16px;overflow-x:auto}
+.result-table{width:100%;border-collapse:collapse;font-size:.84rem}
+.result-table th{background:var(--primary);color:#fff;padding:8px 9px;text-align:center;font-weight:600}
+.result-table th:first-child,.result-table td:first-child{width:32px}
+.result-table th:last-child,.result-table td:last-child{text-align:right}
+.result-table td{padding:6px 9px;border-bottom:1px solid var(--border);color:var(--text);text-align:center}
+.result-table tbody tr:nth-child(even) td{background:var(--surface2)}
+.total-row td{background:#1a2744!important;color:#fff!important;font-weight:700}
+.modal-summary{padding:4px 16px 12px;display:flex;flex-direction:column;gap:4px}
+.summary-row{display:flex;justify-content:space-between;align-items:center;padding:9px 13px;border-radius:var(--r-xs);font-size:.88rem}
+.sr-amount{background:var(--success-bg)}.sr-amount strong{color:var(--success)}
+.sr-expense{background:var(--danger-bg)}.sr-expense strong{color:var(--danger)}
+.sr-remain{background:#1a2744;color:#fff;border-radius:var(--r-xs)}.sr-remain span{color:#a0aec0}.sr-remain strong{color:#fff;font-size:1rem}
+.modal-footer-bar{display:flex;gap:7px;padding:12px 16px;border-top:1px solid var(--border);flex-wrap:wrap;justify-content:flex-end}
+
+/* FOOTER */
+.app-footer{position:fixed;bottom:0;left:0;right:0;background:var(--footer-bg);color:var(--footer-text);text-align:center;padding:11px;font-size:.76rem;display:flex;align-items:center;justify-content:center;gap:6px;z-index:100}
+
+/* MARATHI KEYPAD */
+.bc-btn{background:var(--surface2);color:var(--text);border:none;padding:0;height:64px;font-size:1.25rem;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:filter .12s,background .12s;-webkit-tap-highlight-color:transparent;user-select:none}
+.bc-btn:active{filter:brightness(.85)}
+.bc-fn{background:var(--border);color:var(--text)}
+.bc-op{background:#ff9f0a;color:#fff;font-size:1.4rem}
+.bc-op.bc-op-active{background:#fff;color:#ff9f0a}
+.bc-eq{background:#30d158;color:#fff;font-size:1.4rem}
+.bc-history-row{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid var(--border);font-size:.84rem;gap:8px}
+.bc-history-expr{color:var(--text-muted)}
+.bc-history-result{font-weight:700;color:var(--text)}
+position:fixed;bottom:0;left:0;right:0;z-index:1500;background:var(--keypad-bg);border-top:1px solid var(--border);box-shadow:0 -4px 16px rgba(0,0,0,.18);padding:0 0 env(safe-area-inset-bottom,8px) 0;transform:translateY(100%);transition:transform .22s cubic-bezier(.4,0,.2,1);will-change:transform}
+.marathi-keypad-fixed.keypad-visible{transform:translateY(0)}
+.keypad-topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 14px 6px;background:var(--surface2);border-bottom:1px solid var(--border)}
+.keypad-active-label{font-size:.83rem;color:var(--text-muted);font-weight:500;font-family:'Noto Sans Devanagari',sans-serif}
+.keypad-done-btn{background:var(--primary);color:#fff;border:none;border-radius:var(--r-xs);padding:5px 14px;font-size:.83rem;font-weight:600;cursor:pointer}
+.keypad-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:8px 8px 10px}
+.key-btn{background:var(--keypad-key);border:none;border-radius:var(--r-sm);padding:0;height:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:1.4rem;font-family:'Noto Sans Devanagari',sans-serif;font-weight:600;color:var(--text);cursor:pointer;box-shadow:0 3px 0 var(--keypad-key-shadow);transition:transform .08s,box-shadow .08s;user-select:none;-webkit-user-select:none}
+.key-btn small{font-size:.58rem;color:var(--text-muted);font-family:'Inter',sans-serif;font-weight:400;margin-top:-2px}
+.key-btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--keypad-key-shadow)}
+.key-del{background:var(--danger-bg);color:var(--danger);font-size:1.3rem}
+.key-del small{display:none}
+
+/* TOAST */
+.toast{position:fixed;bottom:72px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:8px 18px;border-radius:999px;font-size:.83rem;font-weight:500;z-index:3000;box-shadow:var(--shadow-lg);white-space:nowrap;transition:opacity .3s}
+.toast.toast-success{background:var(--success)}
+.toast.toast-error{background:var(--danger)}
+
+/* TITLE PROMPT OVERLAY */
+.title-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:4000;display:flex;align-items:center;justify-content:center;padding:16px}
+.title-box{background:var(--surface);border-radius:var(--r);padding:22px 20px;width:100%;max-width:300px;box-shadow:var(--shadow-lg)}
+.title-box p{margin:0 0 10px;font-weight:600;font-size:.93rem}
+.title-box input{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:.88rem;background:var(--surface2);color:var(--text);margin-bottom:13px;font-family:inherit;outline:none}
+.title-box input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.13)}
+.title-box-btns{display:flex;gap:9px;justify-content:flex-end}
+
+/* UTILITY */
+.hidden{display:none!important}
+.sep{height:1px;background:var(--border);margin:6px 0}
+
+/* IMPORT/EXPORT CHOICE MODAL BUTTONS */
+#importExportBtns .btn {
+  width:100%;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+  line-height:1.3;
+  border-radius:var(--r);
+}
+#importExportBtns .btn span {
+  font-size:.73rem;
+  font-weight:400;
+  opacity:.85;
+  margin-top:2px;
+  display:block;
+}
+
+/* PRINT */
+@media print{
+  body *{visibility:hidden}
+  #pdfPrintArea,#pdfPrintArea *{visibility:visible}
+  #pdfPrintArea{position:absolute;top:0;left:0;width:100%;max-width:none;box-shadow:none;border-radius:0;max-height:none;overflow:visible}
+  .no-print{display:none!important}
+  .modal-overlay{position:static;background:none}
+}
+@media(max-width:380px){
+  .nav-title{font-size:.88rem}
+  .summary-grid{grid-template-columns:1fr}
+  .action-bar .btn-outline-sm{font-size:.73rem;padding:6px 8px}
+  .key-btn{height:46px;font-size:1.3rem}
+  .input-row-3{grid-template-columns:1fr 68px 90px}
+}
+@media(min-width:600px){
+  .main-container{padding:20px 16px 28px}
+  .key-btn{height:54px}
+}
+
+
+.qty-subtotal {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-left: 4px;
+  margin-top: 2px;
+}
+
+.qty-row-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+</style>
 </head>
 <body>
 
-  <!-- NAVBAR -->
-  <header class="navbar-fixed">
-    <nav class="app-navbar">
-      <div class="nav-brand">
-        <img src="calculator-solid-full.svg" width="32" height="32" alt="Calculator">
-        <span class="nav-title" data-en="Expense Calculator" data-mr="खर्च कॅल्क्युलेटर">Expense Calculator</span>
+<!-- NAVBAR -->
+<header class="navbar-fixed">
+  <nav class="app-navbar">
+    <div class="nav-brand">
+      <span class="nav-icon">🧮</span>
+      <div>
+        <div class="nav-title" data-en="Expense Calculator" data-mr="खर्च कॅल्क्युलेटर">Expense Calculator</div>
+        <div class="nav-sub" data-en="4 Calculators" data-mr="४ कॅल्क्युलेटर">4 Calculators</div>
       </div>
-      <div class="nav-actions">
-        <button class="btn-icon" onclick="toggleTheme()"><span id="themeIcon">🌙</span></button>
-        <button class="btn-lang" onclick="toggleLanguage()"><span id="langLabel">मराठी</span></button>
+    </div>
+    <div class="nav-actions">
+      <button class="btn-icon" onclick="toggleTheme()"><span id="themeIcon">🌙</span></button>
+      <button class="btn-lang" onclick="toggleLanguage()"><span id="langLabel">मराठी</span></button>
+    </div>
+  </nav>
+  <div class="calc-nav">
+    <button class="calc-tab active" onclick="switchCalc(0)" id="tab0" data-en="💰 Expense" data-mr="💰 खर्च">💰 Expense</button>
+    <button class="calc-tab" onclick="switchCalc(1)" id="tab1" data-en="📦 Qty × Price" data-mr="📦 प्रमाण × किंमत">📦 Qty × Price</button>
+    <button class="calc-tab" onclick="switchCalc(2)" id="tab2" data-en="🗂️ Category" data-mr="🗂️ श्रेणी">🗂️ Category</button>
+    <button class="calc-tab" onclick="switchCalc(3)" id="tab3" data-en="🔢 Calc" data-mr="🔢 कॅल्क">🔢 Calc</button>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════
+     CALCULATOR 1 — EXPENSE CALCULATOR
+════════════════════════════════════════════ -->
+<div class="calc-page active" id="page0">
+<main class="main-container">
+
+  <div class="info-card">
+    <p data-en="Add expenses below. Total is auto-calculated. Export as PDF or Image — re-import exported PDFs to edit again."
+       data-mr="खाली खर्च जोडा. एकूण आपोआप मोजले जाते. PDF किंवा प्रतिमा म्हणून निर्यात करा — पुन्हा आयात करून संपादित करता येते.">
+      Add expenses below. Total is auto-calculated. Export as PDF or Image — re-import exported PDFs to edit again.
+    </p>
+  </div>
+
+  <div class="action-bar">
+    <button class="btn btn-outline-sm" onclick="showImportChoice('exp')">📂 <span data-en="Import" data-mr="आयात">Import</span></button>
+    <button class="btn btn-outline-sm" onclick="showExportChoice('exp')">📤 <span data-en="Export" data-mr="निर्यात">Export</span></button>
+    <button class="btn btn-outline-sm" onclick="expShowModal()">📊 <span data-en="Summary" data-mr="सारांश">Summary</span></button>
+  </div>
+  <input type="file" id="expImportInput" accept=".json,.pdf" style="display:none" onchange="handleExpImport(event)">
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title" data-en="Expense Items" data-mr="खर्चाचे तपशील">Expense Items</h2>
+      <div class="row-controls">
+        <button class="btn-icon-round" onclick="expAddRow()" title="Add">➕</button>
+        <button class="btn-icon-round" onclick="expReset()" title="Reset">🔄</button>
+        <button class="btn-icon-round" onclick="expRemoveRow()" title="Remove">➖</button>
       </div>
-    </nav>
-  </header>
-
-  <main class="main-container" id="mainContainer">
-
-    <div class="info-card">
-      <p data-en="Add your expenses below. The total is calculated automatically. Export as PDF or Image — you can re-import exported PDFs to edit them again."
-         data-mr="खाली आपले खर्च जोडा. एकूण आपोआप मोजले जाते. PDF किंवा प्रतिमा म्हणून निर्यात करा — संपादनासाठी निर्यात केलेले PDF पुन्हा आयात करता येतात.">
-        Add your expenses below. The total is calculated automatically. Export as PDF or Image — you can re-import exported PDFs to edit them again.
-      </p>
     </div>
-
-    <!-- ACTION BUTTONS -->
-    <div class="action-bar">
-      <button class="btn btn-outline-sm" onclick="triggerImport()">
-        📂 <span data-en="Import PDF/JSON" data-mr="आयात करा">Import PDF/JSON</span>
-      </button>
-      <button class="btn btn-outline-sm" onclick="exportJSON()">
-        💾 <span data-en="Save JSON" data-mr="JSON जतन">Save JSON</span>
-      </button>
-      <button class="btn btn-outline-sm" onclick="showModal()">
-        📊 <span data-en="Summary" data-mr="सारांश">Summary</span>
-      </button>
-      <button class="btn btn-outline-sm" onclick="exportPDF()">
-        📄 <span data-en="PDF" data-mr="PDF">PDF</span>
-      </button>
-      <button class="btn btn-outline-sm" onclick="exportImage()">
-        🖼️ <span data-en="Image" data-mr="प्रतिमा">Image</span>
-      </button>
+    <div class="col-headers col-headers-2">
+      <span data-en="Title" data-mr="शीर्षक">Title</span>
+      <span data-en="Amount (₹)" data-mr="रक्कम (₹)">Amount (₹)</span>
     </div>
+    <div id="expRows" class="input-rows-wrap"></div>
+    <div class="total-bar">
+      <span data-en="Total Expenses:" data-mr="एकूण खर्च:">Total Expenses:</span>
+      <strong id="expShow" class="total-bar-value">—</strong>
+    </div>
+  </div>
 
-    <!-- hidden file inputs -->
-    <input type="file" id="importFileInput" accept=".json,.pdf" style="display:none" onchange="handleImport(event)">
-
-    <!-- EXPENSE ROWS CARD -->
-    <div class="card expense-card">
-      <div class="card-header">
-        <h2 class="card-title" data-en="Expense Items" data-mr="खर्चाचे तपशील">Expense Items</h2>
-        <div class="row-controls">
-          <button class="btn-icon-round" onclick="addInputRow()" title="Add row">
-            <img src="circle-plus-solid-full.svg" alt="Add" width="26">
-          </button>
-          <button class="btn-icon-round" onclick="resetIp()" title="Reset">
-            <img src="circular.png" alt="Reset" width="26">
-          </button>
-          <button class="btn-icon-round" onclick="removeInputRow()" title="Remove last">
-            <img src="circle-minus-solid-full.svg" alt="Remove" width="26">
-          </button>
+  <div class="card">
+    <h2 class="card-title" style="margin-bottom:12px" data-en="Calculate Balance" data-mr="शिल्लक मोजा">Calculate Balance</h2>
+    <div class="summary-grid">
+      <div class="summary-field">
+        <label data-en="Your Amount" data-mr="आपली रक्कम">Your Amount</label>
+        <div class="input-with-badge">
+          <input type="text" class="form-input text-center" id="expAmount" placeholder="0" inputmode="decimal">
+          <span class="currency-badge">₹</span>
         </div>
       </div>
-      <div class="expense-col-headers">
-        <span data-en="Title" data-mr="शीर्षक">Title</span>
-        <span data-en="Amount (₹)" data-mr="रक्कम (₹)">Amount (₹)</span>
+      <div class="summary-field">
+        <label data-en="Total Expense" data-mr="एकूण खर्च">Total Expense</label>
+        <div class="input-with-badge">
+          <input type="text" class="form-input text-center" id="expTotal" placeholder="0" inputmode="decimal" readonly>
+          <span class="currency-badge">₹</span>
+        </div>
       </div>
-      <div id="inputRows">
-        <div class="input-row">
-          <input type="text" class="form-input title-input" placeholder="Title" data-ph-en="Title" data-ph-mr="शीर्षक">
-          <div class="amount-wrap">
-            <input type="text" class="form-input amount-input" placeholder="0" inputmode="decimal" data-ph-en="0" data-ph-mr="०" readonly>
-            <span class="currency-badge">₹</span>
+    </div>
+    <div class="btn-row-center">
+      <button class="btn btn-primary btn-calc" onclick="expCalculate()">🧮 <span data-en="Calculate" data-mr="मोजा">Calculate</span></button>
+    </div>
+    <div id="expRemain" class="remain-display hidden"></div>
+  </div>
+
+  <div id="expSaveBar" class="save-options-bar hidden">
+    <p class="save-label" data-en="Imported data loaded. Choose save option:" data-mr="आयात केलेला डेटा लोड. जतन पर्याय निवडा:">Imported data loaded. Choose save option:</p>
+    <div class="btn-row">
+      <button class="btn btn-info" onclick="expSaveAsNew()">➕ <span data-en="Save as New" data-mr="नवीन म्हणून जतन">Save as New</span></button>
+    </div>
+  </div>
+
+</main>
+</div><!-- /page0 -->
+
+<!-- ═══════════════════════════════════════════
+     CALCULATOR 2 — QTY × PRICE CALCULATOR
+════════════════════════════════════════════ -->
+<div class="calc-page" id="page1">
+<main class="main-container">
+
+  <div class="info-card">
+    <p data-en="Add item name, quantity and price per unit. Row subtotal shown below each row. Export as PDF or Image."
+       data-mr="वस्तूचे नाव, प्रमाण आणि एकक किंमत जोडा. प्रत्येक ओळीखाली उप-एकूण दिसते.">
+      Add item name, quantity and price per unit. Row subtotal shown below each row. Export as PDF or Image.
+    </p>
+  </div>
+
+  <div class="action-bar">
+    <input type="file" id="qtyImportInput" accept=".json,.pdf" style="display:none" onchange="handleQtyImport(event)">
+    <button class="btn btn-outline-sm" onclick="showImportChoice('qty')">📂 <span data-en="Import" data-mr="आयात">Import</span></button>
+    <button class="btn btn-outline-sm" onclick="showExportChoice('qty')">📤 <span data-en="Export" data-mr="निर्यात">Export</span></button>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title" data-en="Items" data-mr="वस्तू">Items</h2>
+      <div class="row-controls">
+        <button class="btn-icon-round" onclick="qtyAddRow()" title="Add">➕</button>
+        <button class="btn-icon-round" onclick="qtyReset()" title="Reset">🔄</button>
+        <button class="btn-icon-round" onclick="qtyRemoveRow()" title="Remove">➖</button>
+      </div>
+    </div>
+    <div class="col-headers col-headers-3">
+      <span data-en="Item Name" data-mr="वस्तूचे नाव">Item Name</span>
+      <span data-en="Qty" data-mr="प्रमाण">Qty</span>
+      <span data-en="Price (₹)" data-mr="किंमत (₹)">Price (₹)</span>
+    </div>
+    <div id="qtyRows" class="input-rows-wrap"></div>
+    <div class="total-bar">
+      <span data-en="Grand Total:" data-mr="एकूण रक्कम:">Grand Total:</span>
+      <strong id="qtyShow" class="total-bar-value">—</strong>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="summary-grid">
+      <div class="summary-field">
+        <label data-en="Your Budget" data-mr="आपले बजेट">Your Budget</label>
+        <div class="input-with-badge">
+          <input type="text" class="form-input text-center" id="qtyBudget" placeholder="0" inputmode="decimal">
+          <span class="currency-badge">₹</span>
+        </div>
+      </div>
+      <div class="summary-field">
+        <label data-en="Grand Total" data-mr="एकूण रक्कम">Grand Total</label>
+        <div class="input-with-badge">
+          <input type="text" class="form-input text-center" id="qtyTotalDisp" placeholder="0" inputmode="decimal" readonly>
+          <span class="currency-badge">₹</span>
+        </div>
+      </div>
+    </div>
+    <div class="btn-row-center">
+      <button class="btn btn-primary btn-calc" onclick="qtyCalculate()">🧮 <span data-en="Calculate" data-mr="मोजा">Calculate</span></button>
+    </div>
+    <div id="qtyRemain" class="remain-display hidden"></div>
+  </div>
+
+</main>
+</div><!-- /page1 -->
+
+<!-- ═══════════════════════════════════════════
+     CALCULATOR 3 — CATEGORY CALCULATOR
+════════════════════════════════════════════ -->
+<div class="calc-page" id="page2">
+<main class="main-container">
+
+  <div class="info-card">
+    <p data-en="Create categories (e.g. Groceries, Utilities). Add items with amounts inside each category. See totals per category and grand total."
+       data-mr="श्रेणी तयार करा (उदा. किराणा, युटिलिटी). प्रत्येक श्रेणीत वस्तू आणि रकमा जोडा. प्रत्येक श्रेणीचे आणि एकूण टोटल पहा.">
+      Create categories (e.g. Groceries, Utilities). Add items with amounts inside each category. See totals per category and grand total.
+    </p>
+  </div>
+
+  <div class="action-bar">
+    <input type="file" id="catImportInput" accept=".json,.pdf" style="display:none" onchange="handleCatImport(event)">
+    <button class="btn btn-outline-sm" onclick="showImportChoice('cat')">📂 <span data-en="Import" data-mr="आयात">Import</span></button>
+    <button class="btn btn-outline-sm" onclick="showExportChoice('cat')">📤 <span data-en="Export" data-mr="निर्यात">Export</span></button>
+  </div>
+
+  <div id="catList"></div>
+
+  <button class="btn-add-cat" onclick="catAdd()">
+    ➕ <span data-en="Add Category" data-mr="श्रेणी जोडा">Add Category</span>
+  </button>
+
+  <div id="catGrandCard" class="grand-total-card hidden">
+    <div class="grand-total-label" data-en="Grand Total" data-mr="एकूण रक्कम">Grand Total</div>
+    <div class="grand-total-value" id="catGrandVal">₹0</div>
+    <div class="cat-summary-list" id="catSummaryList"></div>
+    <div style="margin-top:12px">
+      <div class="summary-grid" style="margin-bottom:10px">
+        <div class="summary-field">
+          <label style="color:#a0c4ff" data-en="Your Budget" data-mr="आपले बजेट">Your Budget</label>
+          <div class="input-with-badge">
+            <input type="text" class="form-input text-center" id="catBudget" placeholder="0" inputmode="decimal" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#fff">
+            <span class="currency-badge" style="color:#a0c4ff">₹</span>
           </div>
         </div>
-      </div>
-      <div class="expense-total-bar">
-        <span data-en="Total Expenses:" data-mr="एकूण खर्च:">Total Expenses:</span>
-        <strong id="expenseShow" class="expense-total-value">—</strong>
-      </div>
-    </div>
-
-    <!-- CALCULATE CARD -->
-    <div class="card summary-card">
-      <h2 class="card-title" data-en="Calculate Balance" data-mr="शिल्लक मोजा">Calculate Balance</h2>
-      <div class="summary-grid">
         <div class="summary-field">
-          <label for="amount" data-en="Your Amount" data-mr="आपली रक्कम">Your Amount</label>
+          <label style="color:#a0c4ff" data-en="Total Spent" data-mr="एकूण खर्च">Total Spent</label>
           <div class="input-with-badge">
-            <input type="text" class="form-input text-center" id="amount" placeholder="0" inputmode="decimal" readonly>
-            <span class="currency-badge">₹</span>
-          </div>
-        </div>
-        <div class="summary-field">
-          <label for="expense" data-en="Total Expense" data-mr="एकूण खर्च">Total Expense</label>
-          <div class="input-with-badge">
-            <input type="text" class="form-input text-center" id="expense" placeholder="0" inputmode="decimal" readonly>
-            <span class="currency-badge">₹</span>
+            <input type="text" class="form-input text-center" id="catTotalDisp" placeholder="0" readonly style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#fff">
+            <span class="currency-badge" style="color:#a0c4ff">₹</span>
           </div>
         </div>
       </div>
       <div class="btn-row-center">
-        <button class="btn btn-primary btn-calc" onclick="calculate()">
-          🧮 <span data-en="Calculate" data-mr="मोजा">Calculate</span>
-        </button>
+        <button class="btn btn-primary btn-calc" onclick="catCalculate()">🧮 <span data-en="Calculate" data-mr="मोजा">Calculate</span></button>
       </div>
-      <div id="remain" class="remain-display hidden"></div>
-    </div>
-
-    <!-- SAVE OPTIONS (after import) -->
-    <div id="saveOptionsBar" class="save-options-bar hidden">
-      <p class="save-label" data-en="Imported data loaded. Choose save option:" data-mr="आयात केलेला डेटा लोड आहे. जतन पर्याय निवडा:">Imported data loaded. Choose save option:</p>
-      <div class="btn-row">
-        <!-- <button class="btn btn-success" onclick="saveOverwrite()">
-          ✏️ <span data-en="Overwrite Existing" data-mr="विद्यमान अपडेट करा">Overwrite Existing</span>
-        </button> -->
-        <button class="btn btn-info" onclick="saveAsNew()">
-          ➕ <span data-en="Save as New" data-mr="नवीन म्हणून जतन करा">Save as New</span>
-        </button>
-      </div>
-    </div>
-
-  </main>
-
-  <!-- RESULT MODAL -->
-  <div class="modal-overlay hidden" id="resultModal" onclick="handleModalClick(event)">
-    <div class="modal-box" id="pdfPrintArea">
-      <div class="modal-header-bar">
-        <div class="modal-brand">
-          <img src="calculator-solid-full.svg" width="24" height="24" alt="">
-          <span data-en="Expense Summary" data-mr="खर्चाचा सारांश">Expense Summary</span>
-        </div>
-        <div class="modal-date" id="modalDate"></div>
-      </div>
-      <div class="modal-table-wrap">
-        <table class="result-table" id="myTable">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th data-en="Title" data-mr="शीर्षक">Title</th>
-              <th data-en="Amount" data-mr="रक्कम">Amount</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-          <tfoot>
-            <tr class="total-row">
-              <td colspan="2" data-en="Total Expense" data-mr="एकूण खर्च">Total Expense</td>
-              <td id="totalex">—</td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-      <div class="modal-summary">
-        <div class="summary-row sr-amount">
-          <span data-en="Amount" data-mr="रक्कम">Amount</span>
-          <strong id="M_amount">—</strong>
-        </div>
-        <div class="summary-row sr-expense">
-          <span data-en="Total Expense" data-mr="एकूण खर्च">Total Expense</span>
-          <strong id="M_expense">—</strong>
-        </div>
-        <div class="summary-row sr-remain">
-          <span data-en="Remaining Money" data-mr="शिल्लक रक्कम">Remaining Money</span>
-          <strong id="M_remain">—</strong>
-        </div>
-      </div>
-      <div class="modal-footer-bar no-print">
-        <button class="btn btn-secondary" onclick="closeModal()">
-          <span data-en="Close" data-mr="बंद करा">Close</span>
-        </button>
-        <button class="btn btn-danger" onclick="exportPDF()">
-          📄 <span data-en="PDF" data-mr="PDF">PDF</span>
-        </button>
-        <button class="btn btn-info" onclick="exportImage()">
-          🖼️ <span data-en="Image" data-mr="प्रतिमा">Image</span>
-        </button>
-      </div>
+      <div id="catRemain" class="remain-display hidden" style="margin-top:10px"></div>
     </div>
   </div>
 
-  <!-- FOOTER -->
-  <footer class="app-footer">
-    <img src="calculator-solid-full.svg" width="18" height="18" alt="">
-    <span data-en="Simplify Your Daily Calculations" data-mr="आपल्या दैनंदिन हिशेबाला सोपे करा">Simplify Your Daily Calculations</span>
-  </footer>
+</main>
+</div><!-- /page2 -->
 
-  <!-- MARATHI KEYPAD — fixed bottom, like real mobile keyboard -->
-  <div id="marathiKeypad" class="marathi-keypad-fixed hidden">
-    <div class="keypad-topbar">
-      <span class="keypad-active-label" id="keypadActiveLabel">—</span>
-      <button class="keypad-done-btn" onclick="closeMarathiKeypad()" data-en="Done ✓" data-mr="झाले ✓">Done ✓</button>
-    </div>
-    <div class="keypad-grid">
-      <button class="key-btn" onclick="insertMarathiNum('७')">७<small>7</small></button>
-      <button class="key-btn" onclick="insertMarathiNum('८')">८<small>8</small></button>
-      <button class="key-btn" onclick="insertMarathiNum('९')">९<small>9</small></button>
-      <button class="key-btn" onclick="insertMarathiNum('४')">४<small>4</small></button>
-      <button class="key-btn" onclick="insertMarathiNum('५')">५<small>5</small></button>
-      <button class="key-btn" onclick="insertMarathiNum('६')">६<small>6</small></button>
-      <button class="key-btn" onclick="insertMarathiNum('१')">१<small>1</small></button>
-      <button class="key-btn" onclick="insertMarathiNum('२')">२<small>2</small></button>
-      <button class="key-btn" onclick="insertMarathiNum('३')">३<small>3</small></button>
-      <button class="key-btn key-zero" onclick="insertMarathiNum('०')">०<small>0</small></button>
-      <button class="key-btn" onclick="insertMarathiNum('.')">.<small>.</small></button>
-      <button class="key-btn key-del" onclick="marathiBackspace()">⌫</button>
-    </div>
+<!-- CALCULATOR 4 — BASIC CALCULATOR -->
+<div class="calc-page" id="page3">
+<main class="main-container">
+  <div class="info-card">
+    <p data-en="A standard calculator with addition, subtraction, multiplication and division. Supports Marathi numerals." data-mr="बेरीज, वजाबाकी, गुणाकार, भागाकारासाठी साधे कॅल्क्युलेटर. मराठी अंकांना आधार आहे.">
+      A standard calculator with addition, subtraction, multiplication and division. Supports Marathi numerals.
+    </p>
   </div>
 
-  <div id="toast" class="toast hidden"></div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <!-- Display -->
+    <div id="basicCalcDisplay" style="background:var(--primary);padding:18px 16px 14px;min-height:90px;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-end;gap:4px;">
+      <div id="basicCalcExpr" style="font-size:.82rem;color:#a0c4ff;min-height:18px;word-break:break-all;text-align:right"></div>
+      <div id="basicCalcVal" style="font-size:2.2rem;font-weight:700;color:#fff;word-break:break-all;text-align:right">0</div>
+    </div>
 
-  <!-- pdfMake + YOUR vfs_fonts -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-  <script src="vfs_fonts.js"></script>
-  <!-- pdf.js for reading PDF on import -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <!-- html2canvas for image export -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="main.js"></script>
+    <!-- Buttons grid -->
+    <div id="basicCalcGrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border)">
+      <!-- Row 1 -->
+      <button class="bc-btn bc-fn" onclick="bcAction('clear')" data-en="AC" data-mr="AC">AC</button>
+      <button class="bc-btn bc-fn" onclick="bcAction('sign')" data-en="+/−" data-mr="+/−">+/−</button>
+      <button class="bc-btn bc-fn" onclick="bcAction('pct')" data-en="%" data-mr="%">%</button>
+      <button class="bc-btn bc-op" onclick="bcAction('op','÷')" data-en="÷" data-mr="÷">÷</button>
+      <!-- Row 2 -->
+      <button class="bc-btn" onclick="bcAction('num','7')" data-en="7" data-mr="७">7</button>
+      <button class="bc-btn" onclick="bcAction('num','8')" data-en="8" data-mr="८">8</button>
+      <button class="bc-btn" onclick="bcAction('num','9')" data-en="9" data-mr="९">9</button>
+      <button class="bc-btn bc-op" onclick="bcAction('op','×')" data-en="×" data-mr="×">×</button>
+      <!-- Row 3 -->
+      <button class="bc-btn" onclick="bcAction('num','4')" data-en="4" data-mr="४">4</button>
+      <button class="bc-btn" onclick="bcAction('num','5')" data-en="5" data-mr="५">5</button>
+      <button class="bc-btn" onclick="bcAction('num','6')" data-en="6" data-mr="६">6</button>
+      <button class="bc-btn bc-op" onclick="bcAction('op','−')" data-en="−" data-mr="−">−</button>
+      <!-- Row 4 -->
+      <button class="bc-btn" onclick="bcAction('num','1')" data-en="1" data-mr="१">1</button>
+      <button class="bc-btn" onclick="bcAction('num','2')" data-en="2" data-mr="२">2</button>
+      <button class="bc-btn" onclick="bcAction('num','3')" data-en="3" data-mr="३">3</button>
+      <button class="bc-btn bc-op" onclick="bcAction('op','+')">+</button>
+      <!-- Row 5 -->
+      <button class="bc-btn" onclick="bcAction('num','0')" style="grid-column:span 2;justify-content:flex-start;padding-left:28px" data-en="0" data-mr="०">0</button>
+      <button class="bc-btn" onclick="bcAction('dot')" data-en="." data-mr=".">.</button>
+      <button class="bc-btn bc-eq" onclick="bcAction('eq')">=</button>
+    </div>
+  </div>
+  <!-- History -->
+  <div class="card" style="padding:0">
+    <div class="card-header" style="padding:10px 14px">
+      <h2 class="card-title" data-en="History" data-mr="इतिहास">History</h2>
+      <button class="btn-icon-round" onclick="bcClearHistory()" title="Clear">🔄</button>
+    </div>
+    <div id="basicCalcHistory" style="max-height:200px;overflow-y:auto;padding:4px 0">
+      <p id="bcHistEmpty" style="text-align:center;color:var(--text-muted);font-size:.84rem;padding:12px" data-en="No calculations yet" data-mr="अद्याप कोणतेही गणना नाही">No calculations yet</p>
+    </div>
+  </div>
+</main>
+</div><!-- /page3 -->
+
+<!-- RESULT MODAL (shared) -->
+<div class="modal-overlay hidden" id="resultModal" onclick="handleModalClick(event)">
+  <div class="modal-box" id="pdfPrintArea">
+    <div class="modal-header-bar">
+      <div class="modal-brand">🧮 <span id="modalTitle">Expense Summary</span></div>
+      <div class="modal-date" id="modalDate"></div>
+    </div>
+    <div class="modal-table-wrap">
+      <table class="result-table" id="myTable">
+        <thead><tr id="modalTableHead"></tr></thead>
+        <tbody></tbody>
+        <tfoot><tr class="total-row" id="modalTableFoot"></tr></tfoot>
+      </table>
+    </div>
+    <div class="modal-summary" id="modalSummary"></div>
+    <div class="modal-footer-bar no-print">
+      <button class="btn btn-secondary" onclick="closeModal()"><span data-en="Close" data-mr="बंद करा">Close</span></button>
+      <button class="btn btn-info" id="modalSaveNewBtn" onclick="saveAsNewPDF()" style="display:none;">➕ <span data-en="Save as New" data-mr="नवीन म्हणून जतन">Save as New</span></button>
+      <button class="btn btn-danger" id="modalPdfBtn" onclick="currentPdfFn&&currentPdfFn()">📄 PDF</button>
+      <button class="btn btn-info" id="modalImgBtn" onclick="currentImgFn&&currentImgFn()">🖼️ <span data-en="Image" data-mr="प्रतिमा">Image</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT/EXPORT CHOICE MODAL -->
+<div class="modal-overlay hidden" id="importExportModal" onclick="if(event.target.id==='importExportModal')closeImportExportModal()">
+  <div class="modal-box" style="max-width:320px">
+    <div class="modal-header-bar">
+      <div class="modal-brand" id="importExportModalTitle">Choose Format</div>
+      <button class="btn-icon-round" onclick="closeImportExportModal()" style="font-size:1.2rem">✕</button>
+    </div>
+    <div style="padding:18px 16px;display:flex;flex-direction:column;gap:10px" id="importExportBtns"></div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="app-footer">
+  🧮 <span data-en="Simplify Your Daily Calculations" data-mr="आपल्या दैनंदिन हिशेबाला सोपे करा">Simplify Your Daily Calculations</span>
+</footer>
+
+<!-- MARATHI KEYPAD -->
+<div id="marathiKeypad" class="marathi-keypad-fixed hidden">
+  <div class="keypad-topbar">
+    <span class="keypad-active-label" id="keypadActiveLabel">—</span>
+    <button class="keypad-done-btn" onclick="closeMarathiKeypad()" data-en="Done ✓" data-mr="झाले ✓">Done ✓</button>
+  </div>
+  <div class="keypad-grid">
+    <button class="key-btn" onclick="kp('७')">७<small>7</small></button>
+    <button class="key-btn" onclick="kp('८')">८<small>8</small></button>
+    <button class="key-btn" onclick="kp('९')">९<small>9</small></button>
+    <button class="key-btn" onclick="kp('४')">४<small>4</small></button>
+    <button class="key-btn" onclick="kp('५')">५<small>5</small></button>
+    <button class="key-btn" onclick="kp('६')">६<small>6</small></button>
+    <button class="key-btn" onclick="kp('१')">१<small>1</small></button>
+    <button class="key-btn" onclick="kp('२')">२<small>2</small></button>
+    <button class="key-btn" onclick="kp('३')">३<small>3</small></button>
+    <button class="key-btn" onclick="kp('०')">०<small>0</small></button>
+    <button class="key-btn" onclick="kp('.')">.<small>.</small></button>
+    <button class="key-btn key-del" onclick="kpDel()">⌫</button>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<!-- LIBS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="vfs_fonts.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="devanagari-font.js"></script>
+
+<!-- MAIN JS -->
+<script src="main.js"></script>
+
 </body>
 </html>
