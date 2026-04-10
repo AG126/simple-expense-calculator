@@ -334,12 +334,12 @@ function openModal(title, headHtml, rows, footHtml, summaryHtml, pdfFn, imgFn, s
   currentSaveAsNewFn = saveAsNewFn;
   
   // Show/hide Save as New button based on whether function is provided
-  const saveBtn = document.getElementById('modalSaveNewBtn');
-  if (saveAsNewFn) {
-    saveBtn.style.display = 'inline-flex';
-  } else {
-    saveBtn.style.display = 'none';
-  }
+//  const saveBtn = document.getElementById('modalSaveNewBtn');
+  // if (saveAsNewFn) {
+  //   saveBtn.style.display = 'inline-flex';
+  // } else {
+  //   saveBtn.style.display = 'none';
+  // }
   
   document.getElementById('resultModal').classList.remove('hidden');
 }
@@ -2024,13 +2024,14 @@ async function catImportFromPDF(file) {
 // ── CALCULATOR 4 — BASIC CALCULATOR ──
 // ────────────────────────────────────────────
 (function() {
-  let bcCurrent = '0';   // what's shown on display
-  let bcPrev    = '';    // previous operand (string)
-  let bcOp      = '';    // pending operator
-  let bcExpr    = '';    // expression string for top display
-  let bcJustEq  = false; // did we just press =?
-  let bcHistory = [];    // [{expr, result}]
-  let bcOpActive = null; // currently highlighted op button
+  let bcCurrent  = '0';   // what's shown on display
+  let bcPrev     = '';    // previous operand (string)
+  let bcOp       = '';    // pending operator
+  let bcExpr     = '';    // expression string for top display
+  let bcJustEq   = false; // did we just press =?
+  let bcNewInput = false; // next digit should start fresh (after op or =)
+  let bcHistory  = [];    // [{expr, result}]
+  let bcOpActive = null;  // currently highlighted op button
 
   const MR_DIGITS = {'0':'०','1':'१','2':'२','3':'३','4':'४','5':'५','6':'६','7':'७','8':'८','9':'९'};
   const EN_DIGITS = {'०':'0','१':'1','२':'2','३':'3','४':'4','५':'5','६':'6','७':'7','८':'8','९':'9'};
@@ -2073,68 +2074,131 @@ async function catImportFromPDF(file) {
     return String(s);
   }
 
-  window.bcAction = function(type, val) {
-    switch(type) {
-      case 'clear':
-        bcCurrent = '0'; bcPrev = ''; bcOp = ''; bcExpr = ''; bcJustEq = false;
-        break;
+ window.bcAction = function(type, val) {
+  switch(type) {
 
-      case 'sign':
-        if (bcCurrent !== '0' && bcCurrent !== 'Error') {
-          bcCurrent = bcCurrent.startsWith('-') ? bcCurrent.slice(1) : '-' + bcCurrent;
-        }
-        break;
+    case 'clear':
+      bcCurrent = '0';
+      bcPrev = '';
+      bcOp = '';
+      bcExpr = '';
+      bcJustEq = false;
+      bcNewInput = false;
+      break;
 
-      case 'pct':
-        if (bcCurrent !== 'Error') {
-          bcCurrent = bcFormat(parseFloat(bcCurrent) / 100);
-        }
-        break;
+    case 'sign':
+      if (bcCurrent !== '0' && bcCurrent !== 'Error') {
+        bcCurrent = bcCurrent.startsWith('-') 
+          ? bcCurrent.slice(1) 
+          : '-' + bcCurrent;
+      }
+      break;
 
-      case 'num':
-        if (bcCurrent === 'Error') { bcCurrent = val; break; }
-        if (bcJustEq) { bcCurrent = val; bcJustEq = false; bcExpr = ''; break; }
-        if (bcCurrent === '0' || bcCurrent === '-0') bcCurrent = (bcCurrent === '-0' ? '-' : '') + val;
-        else if (bcCurrent.length < 15) bcCurrent += val;
-        break;
+    case 'pct':
+      if (bcCurrent !== 'Error') {
+        bcCurrent = bcFormat(parseFloat(bcCurrent) / 100);
+      }
+      break;
 
-      case 'dot':
-        if (bcJustEq) { bcCurrent = '0.'; bcJustEq = false; bcExpr = ''; break; }
-        if (!bcCurrent.includes('.')) bcCurrent += '.';
+    case 'num':
+      if (bcCurrent === 'Error') {
+        bcCurrent = val;
         break;
+      }
 
-      case 'op':
-        if (bcCurrent === 'Error') break;
-        if (bcOp && bcPrev !== '' && !bcJustEq) {
-          // chain operations
-          const res = bcApplyOp(bcPrev, bcOp, bcCurrent);
-          if (res === 'Error') { bcCurrent = 'Error'; bcPrev = ''; bcOp = ''; bcExpr = ''; break; }
-          bcCurrent = bcFormat(res);
-        }
-        bcPrev = bcCurrent; bcOp = val; bcJustEq = false;
-        bcExpr = bcCurrent + ' ' + val;
+      if (bcJustEq) {
+        bcCurrent = val;
+        bcJustEq = false;
+        bcExpr = '';
         break;
+      }
 
-      case 'eq':
-        if (!bcOp || bcPrev === '') break;
-        const a = bcPrev, b = bcCurrent, op = bcOp;
-        const res = bcApplyOp(a, op, b);
-        const fullExpr = a + ' ' + op + ' ' + b + ' =';
+      if (bcNewInput) {   // 🔥 FIX
+        bcCurrent = val;
+        bcNewInput = false;
+        break;
+      }
+
+      if (bcCurrent === '0' || bcCurrent === '-0') {
+        bcCurrent = (bcCurrent === '-0' ? '-' : '') + val;
+      } else if (bcCurrent.length < 15) {
+        bcCurrent += val;
+      }
+      break;
+
+    case 'dot':
+      if (bcJustEq) {
+        bcCurrent = '0.';
+        bcJustEq = false;
+        bcExpr = '';
+        break;
+      }
+
+      if (bcNewInput) {   // 🔥 important
+        bcCurrent = '0.';
+        bcNewInput = false;
+        break;
+      }
+
+      if (!bcCurrent.includes('.')) {
+        bcCurrent += '.';
+      }
+      break;
+
+    case 'op':
+      if (bcCurrent === 'Error') break;
+
+      if (bcOp && bcPrev !== '' && !bcJustEq) {
+        // chain operations
+        const res = bcApplyOp(bcPrev, bcOp, bcCurrent);
         if (res === 'Error') {
           bcCurrent = 'Error';
-        } else {
-          bcCurrent = bcFormat(res);
-          // add to history
-          bcHistory.unshift({ expr: fullExpr, result: bcCurrent });
-          if (bcHistory.length > 30) bcHistory.pop();
-          bcRenderHistory();
+          bcPrev = '';
+          bcOp = '';
+          bcExpr = '';
+          break;
         }
-        bcExpr = fullExpr;
-        bcPrev = ''; bcOp = ''; bcJustEq = true;
-        break;
-    }
-    bcUpdateDisplay();
-  };
+        bcCurrent = bcFormat(res);
+      }
+
+      bcPrev = bcCurrent;
+      bcOp = val;
+      bcJustEq = false;
+      bcNewInput = true; // 🔥 MAIN FIX
+      bcExpr = bcCurrent + ' ' + val;
+      break;
+
+    case 'eq':
+      if (!bcOp || bcPrev === '') break;
+
+      const a = bcPrev;
+      const b = bcCurrent;
+      const op = bcOp;
+
+      const res = bcApplyOp(a, op, b);
+      const fullExpr = a + ' ' + op + ' ' + b + ' =';
+
+      if (res === 'Error') {
+        bcCurrent = 'Error';
+      } else {
+        bcCurrent = bcFormat(res);
+
+        // history
+        bcHistory.unshift({ expr: fullExpr, result: bcCurrent });
+        if (bcHistory.length > 30) bcHistory.pop();
+        bcRenderHistory();
+      }
+
+      bcExpr = fullExpr;
+      bcPrev = '';
+      bcOp = '';
+      bcJustEq = true;
+      bcNewInput = true; // 🔥 important
+      break;
+  }
+
+  bcUpdateDisplay();
+};
 
   function bcRenderHistory() {
     const mr = currentLang === 'mr';
